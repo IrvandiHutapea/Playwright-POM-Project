@@ -1,0 +1,59 @@
+
+name: Playwright POM Tests and PDF Reports
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  playwright-tests:
+    name: Run Playwright Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests and generate PDFs
+        run: npx playwright test
+        env:
+          CI: "true"
+
+      - name: Upload reports and evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: Playwright-Test-Reports-${{ github.run_number }}
+          path: |
+            Reports/Individual/
+            Reports/playwright-results.json
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
+          retention-days: 30

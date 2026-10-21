@@ -1,0 +1,21 @@
+
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Environment variables and secrets
+.env
+.env.*
+
+# Playwright reports and temporary files
+playwright-report/
+test-results/
+blob-report/
+
+# Generated reports
+Reports/playwright-results.json
+Reports/Individual/*.pdf
+# Generated PDF reports
+reports/*.pdf

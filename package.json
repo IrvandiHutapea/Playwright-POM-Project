@@ -1,0 +1,25 @@
+{
+  "name": "playwright-pom-project",
+  "version": "1.0.0",
+  "description": "Playwright JavaScript POM project for AutomationExercise",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:login": "playwright test tests/LoginTest.spec.js",
+    "test:product": "playwright test tests/ProductTest.spec.js",
+    "test:register": "playwright test tests/RegisterTest.spec.js",
+    "test:contact": "playwright test tests/ContactUsTest.spec.js",
+    "test:logout": "playwright test tests/LogoutTest.spec.js",
+    "report:pdf": "node utils/PdfReportGenerator.js",
+    "report": "playwright show-report"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
