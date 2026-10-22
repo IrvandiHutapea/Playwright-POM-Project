@@ -62,3 +62,10 @@ Register menggunakan email random berbasis timestamp agar tidak bentrok dengan a
 Test login yang disediakan adalah negative login supaya tidak membutuhkan akun eksternal milik user.
 
 Jika website berubah atau sedang lambat, locator/timeout mungkin perlu disesuaikan.
+## CI/CD Verification
+
+This section verifies that GitHub Actions runs automatically when a Pull Request is created.
+
+- Automated testing with Playwright.
+- Individual PDF test reports generated using Python ReportLab.
+- Test artifacts uploaded to GitHub Actions.
