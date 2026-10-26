@@ -565,127 +565,85 @@ def extract_steps(manifest):
     return []
 
 
-
-
-
-
-
 def resolve_screenshot(step, manifest):
-
-    """Resolve screenshot paths, including Windows absolute paths."""
+    """Resolve screenshot paths on both Windows and Linux."""
 
     if not isinstance(step, dict):
-
         return None
-
-
 
     raw_path = (
-
         step.get("screenshot")
-
         or step.get("screenshotPath")
-
         or step.get("screenshot_path")
-
         or step.get("image")
-
         or step.get("path")
-
         or step.get("file")
-
     )
 
-
-
     if not isinstance(raw_path, str) or not raw_path.strip():
-
         return None
 
-
-
-    # Path dari JSON bisa berisi campuran slash Windows dan slash biasa.
-
-    raw_path = raw_path.strip().replace("/", "\\\\")
-
-    path = Path(raw_path)
-
-
+    # Normalize Windows and Linux path separators.
+    normalized_path = raw_path.strip().replace("\\", "/")
+    path = Path(normalized_path)
 
     candidates = [path]
 
+    # Find the path relative to test-results, even when the
+    # original absolute path belongs to another machine.
+    parts = path.parts
 
+    for index, part in enumerate(parts):
+        if part.lower() == "test-results":
+            relative = Path(*parts[index:])
 
-    # Jika path absolut dari mesin lain, cari nama folder/file
+            candidates.append(PROJECT_DIR / relative)
 
-    # relatif terhadap folder project.
+            try:
+                candidates.append(
+                    TEST_RESULTS_DIR / relative.relative_to("test-results")
+                )
+            except ValueError:
+                pass
 
-    try:
-
-        parts = list(path.parts)
-
-        for i, part in enumerate(parts):
-
-            if part.lower() == "test-results":
-
-                relative = Path(*parts[i:])
-
-                candidates.append(PROJECT_DIR / relative)
-
-                candidates.append(TEST_RESULTS_DIR / relative.relative_to("test-results"))
-
-                break
-
-    except (ValueError, OSError):
-
-        pass
-
-
+            break
 
     candidates.extend([
-
         PROJECT_DIR / path,
-
         TEST_RESULTS_DIR / path,
-
     ])
 
-
-
-    if manifest and isinstance(manifest, dict):
-
+    # Also try paths relative to the manifest location.
+    if isinstance(manifest, dict):
         manifest_path = manifest.get("path")
 
         if manifest_path:
-
             manifest_dir = Path(manifest_path).parent
 
             candidates.extend([
-
                 manifest_dir / path,
-
                 manifest_dir.parent / path,
-
             ])
 
-
+    # Remove duplicate candidates and return the first existing file.
+    seen = set()
 
     for candidate in candidates:
-
         try:
+            candidate_key = str(candidate)
+
+            if candidate_key in seen:
+                continue
+
+            seen.add(candidate_key)
 
             if candidate.exists() and candidate.is_file():
-
                 return candidate.resolve()
 
         except (OSError, ValueError):
-
             continue
 
-
-
     return None
-
 
 
 
