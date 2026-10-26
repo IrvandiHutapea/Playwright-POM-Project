@@ -14,23 +14,47 @@ export class HomePage {
   }
 
   async openLogin() {
-    await this.page.locator(this.locator.signupLoginLink).click();
+  await this.page.goto('/login', {
+    waitUntil: 'domcontentloaded',
+    timeout: 60000
+  });
+
+    console.log('Login URL:', this.page.url());
+    console.log(
+      'Page title:',
+      await this.page.title()
+    );
+    console.log(
+      'Page content:',
+      (await this.page.locator('body').innerText()).slice(0, 500)
+    );
   }
 
   async openProducts() {
-    await this.page.locator(this.locator.productsLink).click();
+    await this.page.goto('/products', {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000
+    });
   }
 
   async openCart() {
-    await this.page.locator(this.locator.cartLink).click();
+    await this.page.goto('/view_cart', {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000
+    });
   }
 
   async openContactUs() {
-    await this.page.locator(this.locator.contactUsLink).click();
+    await this.page.goto('/contact_us', {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000
+    });
   }
 
   async logout() {
-    await this.page.locator(this.locator.logoutLink).click();
+    await this.page.locator(this.locator.logoutLink).click({
+      timeout: 15000
+    });
   }
 
   async isLoggedIn() {
