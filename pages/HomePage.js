@@ -14,10 +14,20 @@ export class HomePage {
   }
 
   async openLogin() {
-    await this.page.goto('/login', {
-      waitUntil: 'domcontentloaded',
-      timeout: 60000
-    });
+  await this.page.goto('/login', {
+    waitUntil: 'domcontentloaded',
+    timeout: 60000
+  });
+
+    console.log('Login URL:', this.page.url());
+    console.log(
+      'Page title:',
+      await this.page.title()
+    );
+    console.log(
+      'Page content:',
+      (await this.page.locator('body').innerText()).slice(0, 500)
+    );
   }
 
   async openProducts() {
