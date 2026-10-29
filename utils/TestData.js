@@ -58,9 +58,10 @@ export const TestData = {
   })),
 
   register: registerRows.map((row) => ({
-    name: row.name,
-    email: row.email,
+    ...row,
+    email: generateUser().email,
     password: row.password,
+    name: row.name,
     firstName: row.firstName,
     lastName: row.lastName,
     company: row.company,
@@ -94,10 +95,11 @@ export const TestData = {
 
 export function generateUser() {
   const timestamp = Date.now();
+  const random = Math.floor(Math.random() * 100000);
 
   return {
     name: `TestUser${timestamp}`,
-    email: `testuser${timestamp}@example.com`,
+    email: `testuser${timestamp}${random}@example.com`,
     password: 'TestPassword123!',
     firstName: 'Playwright',
     lastName: 'Tester',
@@ -110,3 +112,4 @@ export function generateUser() {
     mobile: '081234567890',
   };
 }
+
