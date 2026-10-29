@@ -766,117 +766,62 @@ def step_details(step):
 
 
 
-def build_styles():
 
+def build_styles():
     styles = getSampleStyleSheet()
 
-
-
     styles.add(ParagraphStyle(
-
         name="ReportTitleCustom",
-
         parent=styles["Title"],
-
         fontName="Helvetica-Bold",
-
         fontSize=23,
-
         leading=29,
-
         alignment=TA_CENTER,
-
         spaceAfter=18,
-
     ))
 
-
-
     styles.add(ParagraphStyle(
-
         name="ReportSubtitle",
-
         parent=styles["Normal"],
-
         fontSize=11,
-
         leading=16,
-
         alignment=TA_CENTER,
-
         textColor=colors.HexColor("#555555"),
-
     ))
 
-
-
     styles.add(ParagraphStyle(
-
         name="SectionHeadingCustom",
-
         parent=styles["Heading1"],
-
         fontSize=17,
-
         leading=22,
-
         spaceAfter=16,
-
         keepWithNext=True,
-
     ))
 
-
-
     styles.add(ParagraphStyle(
-
         name="StepHeading",
-
         parent=styles["Heading1"],
-
         fontSize=17,
-
         leading=22,
-
         spaceAfter=12,
-
         keepWithNext=True,
-
     ))
 
-
-
     styles.add(ParagraphStyle(
-
         name="BodyCustom",
-
         parent=styles["BodyText"],
-
         fontSize=9,
-
         leading=13,
-
         spaceAfter=7,
-
     ))
-
-
 
     styles.add(ParagraphStyle(
-
         name="SmallCustom",
-
         parent=styles["BodyText"],
-
         fontSize=8,
-
         leading=11,
-
         textColor=colors.HexColor("#555555"),
-
     ))
-
-
 
     styles.add(ParagraphStyle(
         name="TOCEntryCustom",
@@ -892,26 +837,24 @@ def build_styles():
         textColor=colors.HexColor("#222222"),
     ))
 
-
-
     styles.add(ParagraphStyle(
-
         name="StatusCustom",
-
         parent=styles["BodyText"],
-
         fontSize=10,
-
         leading=14,
-
         spaceAfter=8,
-
     ))
 
-
+    styles.add(ParagraphStyle(
+        name="TestCaseHeading",
+        parent=styles["Heading1"],
+        fontSize=16,
+        leading=21,
+        spaceAfter=12,
+        keepWithNext=True,
+    ))
 
     return styles
-
 
 
 
@@ -1037,50 +980,32 @@ class EvidenceDocument(BaseDocTemplate):
 
 
     def afterFlowable(self, flowable):
-
         if getattr(flowable, "style", None) is None:
-
             return
 
-
-
-        if flowable.style.name != "StepHeading":
-
+        if flowable.style.name not in (
+            "TestCaseHeading",
+            "StepHeading",
+        ):
             return
-
-
 
         self._bookmark_counter += 1
+        key = f"section-{self._bookmark_counter}"
 
-        key = f"step-{self._bookmark_counter}"
-
-
+        title = flowable.getPlainText()
 
         self.canv.bookmarkPage(key)
-
         self.canv.addOutlineEntry(
-
-            flowable.getPlainText(),
-
+            title,
             key,
-
             level=0,
-
             closed=False,
-
         )
-
-
 
         self.notify(
-
             "TOCEntry",
-
-            (0, flowable.getPlainText(), self.page, key),
-
+            (0, title, self.page, key),
         )
-
-
 
 
 
@@ -1092,191 +1017,152 @@ class EvidenceDocument(BaseDocTemplate):
 
 
 
-def make_pdf(test, manifest, output, styles):
-
-    steps = extract_steps(manifest)
-
-
-
-    print(f"[DEBUG] Test: {test['title']}")
-
-    print(f"[DEBUG] Manifest: {manifest.get('path') if manifest else None}")
-
-    print(f"[DEBUG] Jumlah steps: {len(steps)}")
-
-
-
-    for i, step in enumerate(steps, 1):
-
-        screenshot = resolve_screenshot(step, manifest)
-
-        print(
-
-            f"[DEBUG] Step {i}: {step_name(step, i)} | "
-
-            f"Screenshot: {screenshot}"
-
-        )
-
+def make_pdf(tests, manifests, output, styles):
     doc = EvidenceDocument(
-
         str(output),
-
         pagesize=A4,
-
         leftMargin=LEFT_MARGIN,
-
         rightMargin=RIGHT_MARGIN,
-
         topMargin=TOP_MARGIN,
-
         bottomMargin=BOTTOM_MARGIN,
-
-        title=test["title"],
-
+        title=Path(tests[0]["test_file"]).name,
         author=TESTER_NAME,
-
     )
-
-
 
     story = []
+    evidence_by_test = []
 
+    # Cari manifest yang sesuai untuk masing-masing test case.
+    for test in tests:
+        manifest = match_manifest(test, manifests)
+        steps = extract_steps(manifest) if manifest else []
 
+        evidence_by_test.append({
+            "test": test,
+            "manifest": manifest,
+            "steps": steps,
+        })
 
-    # --------------------------------------------------------
+        print(
+            f"[DEBUG] Test: {test['title']} | "
+            f"Steps: {len(steps)} | "
+            f"Manifest: {manifest.get('path') if manifest else None}"
+        )
 
-    # COVER PAGE
-
-    # --------------------------------------------------------
-
-
-
-    story.append(Spacer(1, 3.2 * cm))
-
-    story.append(Paragraph(
-
-        "Playwright Test Evidence",
-
-        styles["ReportTitleCustom"],
-
-    ))
-
-    story.append(Spacer(1, 0.6 * cm))
-
-    story.append(Paragraph(
-
-        clean_text(test["title"]),
-
-        styles["SectionHeadingCustom"],
-
-    ))
-
-    story.append(Spacer(1, 0.4 * cm))
-
-
-
-    status = test["status"].upper()
-
-    duration = format_duration(test["duration"])
-
-
-
-    summary_data = [
-
-        ["Tester", TESTER_NAME],
-
-        ["Test Case", test["title"]],
-
-        ["Status", status],
-
-        ["Duration", duration],
-
-        ["Total Steps", str(len(steps))],
-
-        ["Generated", datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
-
-    ]
-
-
-
-    summary_table = Table(
-
-        summary_data,
-
-        colWidths=[4 * cm, 10.5 * cm],
-
-        hAlign="CENTER",
-
+    total_steps = sum(
+        len(item["steps"]) for item in evidence_by_test
     )
 
+    passed = sum(
+        1 for test in tests
+        if str(test["status"]).lower() == "passed"
+    )
 
+    failed = sum(
+        1 for test in tests
+        if str(test["status"]).lower() in (
+            "failed",
+            "timedout",
+            "interrupted",
+        )
+    )
+
+    # --------------------------------------------------------
+    # COVER PAGE
+    # --------------------------------------------------------
+
+    spec_name = Path(tests[0]["test_file"]).name
+
+    story.append(Spacer(1, 3 * cm))
+    story.append(Paragraph(
+        "Playwright Test Evidence",
+        styles["ReportTitleCustom"],
+    ))
+    story.append(Spacer(1, 0.5 * cm))
+    story.append(Paragraph(
+        clean_text(spec_name),
+        styles["SectionHeadingCustom"],
+    ))
+    story.append(Spacer(1, 0.5 * cm))
+
+    total_duration = sum(
+        float(test.get("duration") or 0)
+        for test in tests
+    )
+
+    summary_data = [
+        ["Tester", TESTER_NAME],
+        ["Spec File", spec_name],
+        ["Total Test Cases", str(len(tests))],
+        ["Passed", str(passed)],
+        ["Failed", str(failed)],
+        ["Total Steps", str(total_steps)],
+        ["Total Duration", format_duration(total_duration)],
+        ["Generated", datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
+    ]
+
+    summary_table = Table(
+        summary_data,
+        colWidths=[4 * cm, 10.5 * cm],
+        hAlign="CENTER",
+    )
 
     summary_table.setStyle(TableStyle([
-
         ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#F0F0F0")),
-
         ("TEXTCOLOR", (0, 0), (-1, -1), colors.HexColor("#222222")),
-
         ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
-
         ("FONTNAME", (1, 0), (1, -1), "Helvetica"),
-
         ("FONTSIZE", (0, 0), (-1, -1), 9),
-
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CCCCCC")),
-
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-
         ("LEFTPADDING", (0, 0), (-1, -1), 8),
-
         ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-
         ("TOPPADDING", (0, 0), (-1, -1), 8),
-
         ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-
     ]))
-
-
 
     story.append(summary_table)
 
+    # Ringkasan status setiap test case pada cover.
+    story.append(Spacer(1, 0.6 * cm))
+    story.append(Paragraph(
+        "Ringkasan Test Case",
+        styles["Heading2"],
+    ))
 
+    case_data = [["No.", "Test Case", "Status", "Duration"]]
 
-    if test["errors"]:
+    for index, test in enumerate(tests, 1):
+        case_data.append([
+            str(index),
+            Paragraph(clean_text(test["title"]), styles["SmallCustom"]),
+            str(test["status"]).upper(),
+            format_duration(test["duration"]),
+        ])
 
-        story.append(Spacer(1, 0.6 * cm))
+    case_table = Table(
+        case_data,
+        colWidths=[1 * cm, 8 * cm, 2.5 * cm, 3 * cm],
+        repeatRows=1,
+        hAlign="CENTER",
+    )
 
-        story.append(Paragraph(
+    case_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E8E8E8")),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CCCCCC")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 5),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]))
 
-            "Test Error",
-
-            styles["Heading2"],
-
-        ))
-
-
-
-        for error in test["errors"]:
-
-            safe_error = clean_text(error).replace("\n", "<br/>")
-
-            story.append(Paragraph(
-
-                safe_error,
-
-                styles["BodyCustom"],
-
-            ))
-
-
-
-
+    story.append(case_table)
 
     # --------------------------------------------------------
-
-    # TABLE OF CONTENTS — JOURNAL STYLE, CLICKABLE, REAL PAGE NUMBERS
+    # TABLE OF CONTENTS
     # --------------------------------------------------------
 
     story.append(PageBreak())
@@ -1284,141 +1170,130 @@ def make_pdf(test, manifest, output, styles):
         "DAFTAR ISI",
         styles["SectionHeadingCustom"],
     ))
-    story.append(Spacer(1, 0.2 * cm))
 
     toc = TableOfContents()
     toc.levelStyles = [styles["TOCEntryCustom"]]
     toc.dotsMinLevel = 0
     story.append(toc)
 
-    # The first step already begins with PageBreak() inside the loop.
-    # Do not add another PageBreak here, or it creates a blank page.
-
     # --------------------------------------------------------
-    # ONE STEP PER PAGE
-
+    # TEST CASES + STEP EVIDENCE
     # --------------------------------------------------------
 
+    for case_index, item in enumerate(evidence_by_test, 1):
+        test = item["test"]
+        manifest = item["manifest"]
+        steps = item["steps"]
 
-
-    if not steps:
-
+        # Setiap test case dimulai pada halaman baru.
         story.append(PageBreak())
 
         story.append(Paragraph(
-
-            "Step evidence tidak ditemukan",
-
-            styles["StepHeading"],
-
+            f"Test Case {case_index}: {clean_text(test['title'])}",
+            styles["TestCaseHeading"],
         ))
 
         story.append(Paragraph(
-
-            "Tidak ada daftar step di step-evidence.json yang cocok "
-
-            "atau manifest belum tersedia untuk test case ini.",
-
-            styles["BodyCustom"],
-
+            f"<b>Status:</b> {clean_text(str(test['status']).upper())}",
+            styles["StatusCustom"],
         ))
 
+        story.append(Paragraph(
+            f"<b>Duration:</b> {format_duration(test['duration'])}",
+            styles["StatusCustom"],
+        ))
 
+        story.append(Paragraph(
+            f"<b>Total Steps:</b> {len(steps)}",
+            styles["StatusCustom"],
+        ))
 
-    for index, step in enumerate(steps, 1):
-
-        # Each step starts on its own page.
-
-        story.append(PageBreak())
-
-
-
-        name = step_name(step, index)
-
-        heading = Paragraph(
-
-            f"{index}. {clean_text(name)}",
-
-            styles["StepHeading"],
-
-        )
-
-        story.append(heading)
-
-
-
-        status_text = step_status(step)
-
-        if status_text:
-
+        if test.get("errors"):
+            story.append(Spacer(1, 0.3 * cm))
             story.append(Paragraph(
-
-                f"<b>Status:</b> {clean_text(status_text)}",
-
-                styles["StatusCustom"],
-
+                "Test Error",
+                styles["Heading2"],
             ))
 
-
-
-        details = step_details(step)
-
-        if details:
-
-            story.append(Paragraph(
-
-                f"<b>Detail:</b> {clean_text(details).replace(chr(10), '<br/>')}",
-
-                styles["BodyCustom"],
-
-            ))
-
-
-
-        
-        screenshot = resolve_screenshot(step, manifest)
-
-        if screenshot:
-            try:
-                image = Image(str(screenshot))
-
-                max_width = PAGE_WIDTH - LEFT_MARGIN - RIGHT_MARGIN
-                max_height = (
-                    PAGE_HEIGHT
-                    - TOP_MARGIN
-                    - BOTTOM_MARGIN
-                    - 5 * cm
-                )
-
-                scale = min(
-                    max_width / image.imageWidth,
-                    max_height / image.imageHeight,
-                    1.0,
-                )
-
-                image.drawWidth = image.imageWidth * scale
-                image.drawHeight = image.imageHeight * scale
-
-                story.append(Spacer(1, 0.3 * cm))
-                story.append(image)
-                story.append(Spacer(1, 0.2 * cm))
-
-                # Nama file screenshot tidak ditampilkan di PDF.
-
-            except Exception as exc:
+            for error in test["errors"]:
                 story.append(Paragraph(
-                    f"Screenshot gagal ditampilkan: {clean_text(exc)}",
+                    clean_text(error).replace("\n", "<br/>"),
+                    styles["BodyCustom"],
+                ))
+
+        if not steps:
+            story.append(Spacer(1, 0.5 * cm))
+            story.append(Paragraph(
+                "Step evidence tidak ditemukan untuk test case ini.",
+                styles["BodyCustom"],
+            ))
+            continue
+
+        for step_index, step in enumerate(steps, 1):
+            # Satu step per halaman.
+            story.append(PageBreak())
+
+            name = step_name(step, step_index)
+
+            story.append(Paragraph(
+                f"{case_index}.{step_index}. {clean_text(name)}",
+                styles["StepHeading"],
+            ))
+
+            status_text = step_status(step)
+            if status_text:
+                story.append(Paragraph(
+                    f"<b>Status:</b> {clean_text(status_text)}",
+                    styles["StatusCustom"],
+                ))
+
+            details = step_details(step)
+            if details:
+                story.append(Paragraph(
+                    f"<b>Detail:</b> "
+                    f"{clean_text(details).replace(chr(10), '<br/>')}",
+                    styles["BodyCustom"],
+                ))
+
+            screenshot = resolve_screenshot(step, manifest)
+
+            if screenshot:
+                try:
+                    image = Image(str(screenshot))
+
+                    max_width = PAGE_WIDTH - LEFT_MARGIN - RIGHT_MARGIN
+                    max_height = (
+                        PAGE_HEIGHT
+                        - TOP_MARGIN
+                        - BOTTOM_MARGIN
+                        - 5 * cm
+                    )
+
+                    scale = min(
+                        max_width / image.imageWidth,
+                        max_height / image.imageHeight,
+                        1.0,
+                    )
+
+                    image.drawWidth = image.imageWidth * scale
+                    image.drawHeight = image.imageHeight * scale
+
+                    story.append(Spacer(1, 0.3 * cm))
+                    story.append(image)
+
+                except Exception as exc:
+                    story.append(Paragraph(
+                        f"Screenshot gagal ditampilkan: {clean_text(exc)}",
+                        styles["SmallCustom"],
+                    ))
+            else:
+                story.append(Paragraph(
+                    "Screenshot tidak ditemukan untuk step ini.",
                     styles["SmallCustom"],
                 ))
-        else:
-            story.append(Paragraph(
-                "Screenshot tidak ditemukan untuk step ini.",
-                styles["SmallCustom"],
-            ))
 
-    # multiBuild resolves actual TOC page numbers and clickable links.
+    # ReportLab akan menghitung nomor halaman TOC dan tautan.
     doc.multiBuild(story)
-
 
 
 # ============================================================
@@ -1430,160 +1305,92 @@ def make_pdf(test, manifest, output, styles):
 
 
 def main():
-
     if not JSON_REPORT.exists():
-
         print(f"[ERROR] JSON report tidak ditemukan: {JSON_REPORT}")
-
         print("Jalankan npx playwright test terlebih dahulu.")
-
         return 1
-
-
 
     try:
-
         with JSON_REPORT.open("r", encoding="utf-8") as file:
-
             data = json.load(file)
-
     except Exception as exc:
-
         print(f"[ERROR] Gagal membaca JSON report: {exc}")
-
         return 1
-
-
 
     tests = flatten_suites(data.get("suites") or [])
 
-
-
     if not tests:
-
         print("[WARN] Tidak ada test case ditemukan di JSON report.")
-
         return 1
 
+    requested_file = (
+        __import__("os").environ.get("PLAYWRIGHT_TEST_FILE", "").strip()
+    )
 
+    if requested_file:
+        requested_name = Path(requested_file).stem.lower()
+        tests = [
+            test for test in tests
+            if Path(test["test_file"]).stem.lower() == requested_name
+        ]
+
+        if not tests:
+            print(
+                f"[WARN] Tidak ada test ditemukan untuk file: {requested_file}"
+            )
+            return 1
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     manifests = read_manifests()
-
     styles = build_styles()
-
-
-
     run_stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # Kelompokkan seluruh test berdasarkan file spec.
+    grouped_tests = {}
+
+    for test in tests:
+        test_file = test.get("test_file") or "UnknownTest.spec.js"
+        spec_name = Path(test_file).name
+        grouped_tests.setdefault(spec_name, []).append(test)
+
+    print(f"Test cases ditemukan: {len(tests)}")
+    print(f"File spec ditemukan: {len(grouped_tests)}")
+    print(f"Evidence manifests ditemukan: {len(manifests)}")
+    print(f"Folder output: {OUTPUT_DIR}")
 
     generated = 0
 
-
-
-    requested_file = (
-
-        __import__("os").environ.get("PLAYWRIGHT_TEST_FILE", "").strip()
-
-    )
-
-
-
-    if requested_file:
-
-        requested_name = Path(requested_file).stem.lower()
-
-        tests = [
-
-            test for test in tests
-
-            if Path(test["test_file"]).stem.lower() == requested_name
-
-        ]
-
-
-
-        if not tests:
-
-            print(
-
-                f"[WARN] Tidak ada test ditemukan untuk file: {requested_file}"
-
-            )
-
-            return 1
-
-
-
-    print(f"Test cases ditemukan: {len(tests)}")
-
-    print(f"Evidence manifests ditemukan: {len(manifests)}")
-
-    print(f"Folder output: {OUTPUT_DIR}")
-
-
-
-    for test in tests:
-
-        manifest = match_manifest(test, manifests)
-
-        duration_text = format_duration(test["duration"])
-
-        name = safe_filename(test["title"])
-
-
-
+    for spec_name, spec_tests in grouped_tests.items():
+        spec_stem = Path(spec_name).stem
         output = OUTPUT_DIR / (
-
-            f"{name}_{duration_text}_{run_stamp}.pdf"
-
+            f"{safe_filename(spec_stem)}_{run_stamp}.pdf"
         )
 
-
-
         try:
-
-            make_pdf(test, manifest, output, styles)
-
-            generated += 1
-
-            print(f"[PDF] {output.relative_to(PROJECT_DIR)}")
-
-
-
-            if not manifest:
-
-                print(
-
-                    f"[WARN] Evidence belum cocok untuk test: "
-
-                    f"{test['title']}"
-
-                )
-
-
-
-        except Exception as exc:
-
-            print(
-
-                f"[ERROR] Gagal membuat PDF untuk "
-
-                f"'{test['title']}': {exc}"
-
+            make_pdf(
+                spec_tests,
+                manifests,
+                output,
+                styles,
             )
 
+            generated += 1
+            print(f"[PDF] {output.relative_to(PROJECT_DIR)}")
 
+        except Exception as exc:
+            print(
+                f"[ERROR] Gagal membuat PDF untuk "
+                f"'{spec_name}': {exc}"
+            )
 
-    print(f"\nSelesai. PDF berhasil dibuat: {generated}/{len(tests)}")
-
+    print(
+        f"\nSelesai. PDF berhasil dibuat: "
+        f"{generated}/{len(grouped_tests)} file spec"
+    )
     print(f"Folder output: {OUTPUT_DIR}")
 
-
-
     return 0 if generated else 1
-
-
 
 
 

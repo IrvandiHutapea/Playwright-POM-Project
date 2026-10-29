@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 import { HomePage } from '../pages/HomePage.js';
 import { ProductPage } from '../pages/ProductPage.js';
 import { CartPage } from '../pages/CartPage.js';
+import { TestData } from '../utils/TestData.js';
 import { reportStep } from '../utils/StepReporter.js';
 
 test.describe('Products and Cart', () => {
@@ -10,6 +11,7 @@ test.describe('Products and Cart', () => {
   test('Search product', async ({ page }, testInfo) => {
     const home = new HomePage(page);
     const products = new ProductPage(page);
+    const productData = TestData.product[0];
 
     // STEP 1: Open home page
     await reportStep(
@@ -43,13 +45,13 @@ test.describe('Products and Cart', () => {
       }
     );
 
-    // STEP 4: Search for Blue Top
+    // STEP 4: Search product from Excel
     await reportStep(
       page,
       testInfo,
-      'Step 4 - Search for Blue Top',
+      `Step 4 - Search for ${productData.searchProduct}`,
       async () => {
-        await products.searchProduct('Blue Top');
+        await products.searchProduct(productData.searchProduct);
       }
     );
 
@@ -62,7 +64,9 @@ test.describe('Products and Cart', () => {
         const names = await products.getProductNames();
 
         expect(names.length).toBeGreaterThan(0);
-        expect(names.join(' ')).toContain('Blue Top');
+        expect(names.join(' ')).toContain(
+          productData.expectedProduct
+        );
       }
     );
   });
@@ -71,6 +75,7 @@ test.describe('Products and Cart', () => {
     const home = new HomePage(page);
     const products = new ProductPage(page);
     const cart = new CartPage(page);
+    const productData = TestData.product[0];
 
     // STEP 1: Open home page
     await reportStep(

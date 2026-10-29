@@ -1,3 +1,4 @@
+
 import { test, expect } from '@playwright/test';
 import { HomePage } from '../pages/HomePage.js';
 import { Login } from '../pages/Login.js';
@@ -9,29 +10,30 @@ test.describe('Login', () => {
     const home = new HomePage(page);
     const login = new Login(page);
 
-    // STEP 1: Open home page
+    // Ambil kredensial dari Excel
+    const user = TestData.validLogin;
+
+    expect(user, 'Valid login data must exist in LoginData.xlsx')
+      .toBeTruthy();
+
     await reportStep(page, testInfo, 'Open home page', async () => {
       await home.open();
     });
 
-    // STEP 2: Open login page
     await reportStep(page, testInfo, 'Open login page', async () => {
       await home.openLogin();
     });
 
-    // STEP 3: Verify login page
     await reportStep(page, testInfo, 'Verify login page is displayed', async () => {
       await expect(
         page.locator(login.locator.loginTitle)
       ).toBeVisible();
     });
 
-    // STEP 4: Enter valid email and password
     await reportStep(page, testInfo, 'Enter valid login credentials', async () => {
-      await login.loginWithData(TestData.validLogin);
+      await login.loginWithData(user);
     });
 
-    // STEP 5: Verify login success
     await reportStep(page, testInfo, 'Verify successful login', async () => {
       await expect(
         page.locator('a:has-text("Logged in as")')
