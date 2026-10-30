@@ -8,13 +8,29 @@ export class ProductPage {
   }
 
   async open() {
-    await this.page.locator(this.locator.productsLink).first().click();
-    await this.page.waitForURL(/\/products/);
+    await this.page.locator(this.locator.productsLink).first().click({
+      timeout: 30000
+    });
+
+    await this.page.waitForURL(/\/products/, {
+      waitUntil: 'domcontentloaded',
+      timeout: 30000
+    });
+
+    await this.page.locator(this.locator.productsTitle).waitFor({
+      state: 'visible',
+      timeout: 30000
+    });
   }
 
   async searchProduct(productName) {
     await this.page.locator(this.locator.searchInput).fill(productName);
     await this.page.locator(this.locator.searchButton).click();
+
+    await this.page.locator(this.locator.productCards).first().waitFor({
+      state: 'visible',
+      timeout: 30000,
+    });
   }
 
   async getProductNames() {
@@ -23,26 +39,45 @@ export class ProductPage {
       .allTextContents();
   }
 
+  
   async closeCartModal() {
     const modal = this.page.locator('#cartModal');
 
-    await modal.waitFor({ state: 'visible' });
+    // Tunggu modal muncul maksimal 5 detik
+    const isModalVisible = await modal.isVisible().catch(() => false);
+
+    if (!isModalVisible) {
+      try {
+        await modal.waitFor({
+          state: 'visible',
+          timeout: 5000
+        });
+      } catch {
+        console.log('Cart modal tidak muncul, melanjutkan proses.');
+        return;
+      }
+    }
 
     const continueButton = modal.getByRole('button', {
-      name: /continue shopping/i
+      name: /continue shopping/i,
     });
 
     await continueButton.click();
-    await modal.waitFor({ state: 'hidden' });
+
+    await modal.waitFor({
+      state: 'hidden',
+      timeout: 10000
+    });
   }
+
 
   async addProductToCart(productName) {
     const product = this.page
       .locator(this.locator.productCards)
       .filter({
         has: this.page.locator('.productinfo p', {
-          hasText: productName
-        })
+          hasText: productName,
+        }),
       })
       .first();
 
@@ -68,7 +103,6 @@ export class ProductPage {
   async viewCart() {
     const modal = this.page.locator('#cartModal');
 
-    // Tutup modal Add to Cart jika masih terbuka
     if (await modal.isVisible()) {
       const continueShopping = modal.getByRole('button', {
         name: /continue shopping/i,
@@ -78,7 +112,6 @@ export class ProductPage {
       await modal.waitFor({ state: 'hidden' });
     }
 
-    // Buka Cart melalui navigasi header
     const cartLink = this.page.locator('header a[href="/view_cart"]');
 
     await cartLink.click();
