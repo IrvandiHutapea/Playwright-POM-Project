@@ -1,10 +1,14 @@
 
 import { test, expect } from '@playwright/test';
+import { ContactUsPage } from '../pages/ContactUsPage.js';
+import { TestData } from '../utils/TestData.js';
 import { reportStep } from '../utils/StepReporter.js';
 import fs from 'node:fs/promises';
 
 test('Contact Us form with file upload', async ({ page }, testInfo) => {
-  // Siapkan file untuk upload
+  const contact = new ContactUsPage(page);
+  const contactData = TestData.contact[0];
+
   const uploadFilePath = testInfo.outputPath('contact-us-upload.txt');
 
   await fs.writeFile(
@@ -12,7 +16,7 @@ test('Contact Us form with file upload', async ({ page }, testInfo) => {
     'Sample attachment for Playwright Contact Us test.'
   );
 
-  // STEP 1: Buka halaman Contact Us
+  // STEP 1: Open Contact Us page
   await reportStep(
     page,
     testInfo,
@@ -26,63 +30,60 @@ test('Contact Us form with file upload', async ({ page }, testInfo) => {
     }
   );
 
-  // STEP 2: Isi form Contact Us
+  // STEP 2: Fill contact form using Excel data
   await reportStep(
     page,
     testInfo,
     'Step 2 - Fill contact form',
     async () => {
-      await page.locator('[data-qa="name"]').fill('Test User');
-      await page.locator('[data-qa="email"]').fill('test@example.com');
-      await page.locator('[data-qa="subject"]').fill('Automation Test');
-      await page.locator('[data-qa="message"]').fill(
-        'Test message from Playwright automation.'
-      );
+      await contact.fillForm(contactData);
 
       await expect(
         page.locator('[data-qa="name"]')
-      ).toHaveValue('Test User');
+      ).toHaveValue(contactData.name);
 
       await expect(
         page.locator('[data-qa="email"]')
-      ).toHaveValue('test@example.com');
+      ).toHaveValue(contactData.email);
+
+      await expect(
+        page.locator('[data-qa="subject"]')
+      ).toHaveValue(contactData.subject);
+
+      await expect(
+        page.locator('[data-qa="message"]')
+      ).toHaveValue(contactData.message);
     }
   );
 
-  // STEP 3: Upload file
+  // STEP 3: Upload attachment
   await reportStep(
     page,
     testInfo,
     'Step 3 - Upload attachment',
     async () => {
-      const uploadInput = page.locator('input[name="upload_file"]');
+      await contact.uploadFile(uploadFilePath);
 
-      await uploadInput.setInputFiles(uploadFilePath);
-
-      await expect(uploadInput).toHaveValue(
-        /contact-us-upload\.txt/
-      );
+      await expect(
+        page.locator('input[name="upload_file"]')
+      ).toHaveValue(/contact-us-upload\.txt/);
     }
   );
 
-  // STEP 4: Submit form dan validasi pesan sukses
+  // STEP 4: Submit contact form
   await reportStep(
     page,
     testInfo,
     'Step 4 - Submit contact form',
     async () => {
-      page.once('dialog', async dialog => {
-        await dialog.accept();
-      });
-
-      await page.locator('[data-qa="submit-button"]').click();
+      await contact.submit();
 
       const successMessage = page.locator(
         '#contact-page .status.alert-success'
       );
 
       await expect(successMessage).toBeVisible({
-        timeout: 15000
+        timeout: 15000,
       });
 
       await expect(successMessage).toContainText(
@@ -91,7 +92,7 @@ test('Contact Us form with file upload', async ({ page }, testInfo) => {
     }
   );
 
-  // STEP 5: Verifikasi akhir
+  // STEP 5: Verify successful submission
   await reportStep(
     page,
     testInfo,

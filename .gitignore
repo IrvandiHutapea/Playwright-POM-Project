@@ -18,4 +18,5 @@ blob-report/
 Reports/playwright-results.json
 Reports/Individual/*.pdf
 # Generated PDF reports
-reports/*.pdf
+reports/*.pdftest_data/~$*.xlsx
+test_data/~$*.xlsx
