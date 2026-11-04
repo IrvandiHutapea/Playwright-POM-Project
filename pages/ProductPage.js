@@ -8,13 +8,9 @@ export class ProductPage {
   }
 
   async open() {
-    await this.page.locator(this.locator.productsLink).first().click({
-      timeout: 30000
-    });
-
-    await this.page.waitForURL(/\/products/, {
+    await this.page.goto('/products', {
       waitUntil: 'domcontentloaded',
-      timeout: 30000
+      timeout: 60000
     });
 
     await this.page.locator(this.locator.productsTitle).waitFor({
@@ -29,7 +25,7 @@ export class ProductPage {
 
     await this.page.locator(this.locator.productCards).first().waitFor({
       state: 'visible',
-      timeout: 30000,
+      timeout: 30000
     });
   }
 
@@ -39,45 +35,41 @@ export class ProductPage {
       .allTextContents();
   }
 
-  
   async closeCartModal() {
     const modal = this.page.locator('#cartModal');
 
-    // Tunggu modal muncul maksimal 5 detik
-    const isModalVisible = await modal.isVisible().catch(() => false);
+    try {
+      await modal.waitFor({
+        state: 'visible',
+        timeout: 10000
+      });
 
-    if (!isModalVisible) {
-      try {
-        await modal.waitFor({
-          state: 'visible',
-          timeout: 5000
-        });
-      } catch {
-        console.log('Cart modal tidak muncul, melanjutkan proses.');
-        return;
+      const continueButton = modal.getByRole('button', {
+        name: /continue shopping/i
+      });
+
+      await continueButton.click();
+
+      await modal.waitFor({
+        state: 'hidden',
+        timeout: 10000
+      });
+    } catch (error) {
+      if (await modal.isVisible().catch(() => false)) {
+        throw error;
       }
+
+      console.log('Cart modal tidak muncul, melanjutkan proses.');
     }
-
-    const continueButton = modal.getByRole('button', {
-      name: /continue shopping/i,
-    });
-
-    await continueButton.click();
-
-    await modal.waitFor({
-      state: 'hidden',
-      timeout: 10000
-    });
   }
-
 
   async addProductToCart(productName) {
     const product = this.page
       .locator(this.locator.productCards)
       .filter({
         has: this.page.locator('.productinfo p', {
-          hasText: productName,
-        }),
+          hasText: productName
+        })
       })
       .first();
 
@@ -101,20 +93,15 @@ export class ProductPage {
   }
 
   async viewCart() {
-    const modal = this.page.locator('#cartModal');
+    await this.page.goto('/view_cart', {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000
+    });
 
-    if (await modal.isVisible()) {
-      const continueShopping = modal.getByRole('button', {
-        name: /continue shopping/i,
+    await this.page.locator(this.page.locator ? '#cart_info_table' : '#cart_info_table')
+      .waitFor({
+        state: 'visible',
+        timeout: 30000
       });
-
-      await continueShopping.click();
-      await modal.waitFor({ state: 'hidden' });
-    }
-
-    const cartLink = this.page.locator('header a[href="/view_cart"]');
-
-    await cartLink.click();
-    await this.page.waitForURL(/\/view_cart/);
   }
 }

@@ -7,10 +7,20 @@ export class HomePage {
   }
 
   async open() {
-    await this.page.goto('/', {
+    const response = await this.page.goto('/', {
       waitUntil: 'domcontentloaded',
       timeout: 60000
     });
+
+    console.log('========== HOME PAGE DIAGNOSTIC ==========');
+    console.log('Response Status:', response?.status());
+    console.log('Current URL:', this.page.url());
+    console.log('Page Title:', await this.page.title());
+    console.log(
+      'Page Content:',
+      (await this.page.locator('body').innerText()).slice(0, 1000)
+    );
+    console.log('==========================================');
   }
 
   async openLogin() {

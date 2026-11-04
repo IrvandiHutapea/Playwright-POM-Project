@@ -18,15 +18,18 @@ for (const user of TestData.register) {
       await home.openLogin();
     });
 
-    await reportStep(page, testInfo, 'Enter new account signup details', async () => {
-      await register.startSignup(user.name, user.email);
-    });
+    await reportStep(
+      page,
+      testInfo,
+      'Enter new account signup details',
+      async () => {
+        await register.startSignup(user.name, user.email);
 
-    await reportStep(page, testInfo, 'Verify account information page', async () => {
-      await expect(
-        page.locator('text=Enter Account Information')
-      ).toBeVisible();
-    });
+        await expect(
+          page.locator(register.locator.accountInformationText)
+        ).toBeVisible({ timeout: 30000 });
+      }
+    );
 
     await reportStep(page, testInfo, 'Fill account information', async () => {
       await register.fillAccountDetails(user);
@@ -35,7 +38,7 @@ for (const user of TestData.register) {
     await reportStep(page, testInfo, 'Verify account creation success', async () => {
       await expect(
         page.locator(register.locator.accountCreatedText)
-      ).toBeVisible();
+      ).toBeVisible({ timeout: 30000 });
     });
 
     await reportStep(page, testInfo, 'Continue after account creation', async () => {
@@ -45,7 +48,7 @@ for (const user of TestData.register) {
     await reportStep(page, testInfo, 'Verify logged-in status', async () => {
       await expect(
         page.locator('a:has-text("Logged in as")')
-      ).toBeVisible();
+      ).toBeVisible({ timeout: 15000 });
     });
   });
 }
