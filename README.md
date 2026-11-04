@@ -1,33 +1,65 @@
-# Playwright POM Project
+# Playwright POM Automation Framework
 
-Project latihan Playwright JavaScript berdasarkan materi yang dipelajari.
+A JavaScript-based web automation testing framework using **Playwright** and **Page Object Model (POM)**.
 
-## 1. Install
+## Key Features
+
+- Page Object Model architecture
+- Excel-based test data management
+- Automated UI testing
+- Step-by-step screenshot evidence
+- Individual PDF reports using Python ReportLab
+- Playwright HTML reports
+- CI/CD automation with GitHub Actions
+- Pull Request and branch protection
+
+## Tech Stack
+
+JavaScript | Playwright | Node.js | Excel | Python | ReportLab | GitHub Actions
+
+## Test Coverage
+
+| Test Scenario | Test Cases |
+|---|---:|
+| Cart | 3 |
+| Contact Us | 1 |
+| Login | 1 |
+| Logout | 1 |
+| Products | 2 |
+| Registration | 2 |
+| **Total** | **10** |
+
+## Installation
 
 ```bash
+git clone https://github.com/IrvandiHutapea/Playwright-POM-Project.git
+cd Playwright-POM-Project
 npm install
 npx playwright install chromium
+pip install -r requirements.txt
 ```
 
-## 2. Jalankan semua test
+## Running Tests
+
+Run all tests:
 
 ```bash
 npm test
 ```
 
-## 3. Jalankan headed
+Run headed mode:
 
 ```bash
 npm run test:headed
 ```
 
-## 4. Debug
+Run debug mode:
 
 ```bash
 npm run test:debug
 ```
 
-## 5. Test tertentu
+Run specific tests:
 
 ```bash
 npm run test:login
@@ -37,36 +69,69 @@ npm run test:contact
 npm run test:logout
 ```
 
-## 6. Lihat Playwright HTML Report
+## Test Reports
+
+**HTML Report**
 
 ```bash
 npm run report
 ```
 
-## 7. Struktur
+**Individual PDF Reports**
 
-- `pages/` = Page Object
-- `locators/` = Locator Class
-- `tests/` = Test Case
-- `utils/` = helper/config/report
-- `test_data/` = test data
-- `Reports/` = custom report JSON
-- `reports/` = report generator
+PDF reports are automatically generated after test execution using Python ReportLab.
 
-## 8. Catatan
+Manual generation:
 
-Project memakai AutomationExercise sebagai website latihan.
+```bash
+py reports/generate_pdf_report.py
+```
 
-Register menggunakan email random berbasis timestamp agar tidak bentrok dengan akun sebelumnya.
+Output directory:
 
-Test login yang disediakan adalah negative login supaya tidak membutuhkan akun eksternal milik user.
+```text
+Reports/Individual/
+```
 
-Jika website berubah atau sedang lambat, locator/timeout mungkin perlu disesuaikan.
-## CI/CD Verification
+## CI/CD Pipeline
 
-This section verifies that GitHub Actions runs automatically when a Pull Request is created.
+GitHub Actions automatically runs tests on every push and Pull Request.
 
-- Automated testing with Playwright.
-- Individual PDF test reports generated using Python ReportLab.
-- Test artifacts uploaded to GitHub Actions.
-CI/CD push trigger verification: 2026-10-22 15:39:26
+Pipeline outputs:
+- Playwright test results
+- Individual PDF reports
+- HTML reports
+- Test evidence artifacts
+
+The main branch is protected using GitHub Rulesets.
+
+## Project Structure
+
+```text
+Playwright-POM-Project/
+├── .github/workflows/
+├── locators/
+├── pages/
+├── reports/
+├── test_data/
+├── tests/
+├── utils/
+├── Reports/
+├── playwright.config.js
+├── package.json
+├── package-lock.json
+├── requirements.txt
+└── README.md
+```
+
+## Application Under Test
+
+[Automation Exercise](https://automationexercise.com/)
+
+## Author
+
+**Irvandi Pransena Hutapea**
+
+Automation Engineer | Software Quality Assurance
+
+[GitHub Repository](https://github.com/IrvandiHutapea/Playwright-POM-Project)

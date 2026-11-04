@@ -1,3 +1,4 @@
+
 import { ContactUsLocator } from '../locators/ContactUsLocator.js';
 
 export class ContactUsPage {
@@ -22,7 +23,7 @@ export class ContactUsPage {
   }
 
   async submit() {
-    this.page.once('dialog', async dialog => {
+    this.page.once('dialog', async (dialog) => {
       await dialog.accept();
     });
 

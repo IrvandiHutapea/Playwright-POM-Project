@@ -1,10 +1,15 @@
+
 export class RegisterLocator {
   signupName = '[data-qa="signup-name"]';
   signupEmail = '[data-qa="signup-email"]';
   signupButton = '[data-qa="signup-button"]';
 
+  accountInformationText = 'text=Enter Account Information';
+  accountCreatedText = 'text=Account Created!';
+
   titleMr = '#id_gender1';
   titleMrs = '#id_gender2';
+
   password = '[data-qa="password"]';
   day = '[data-qa="days"]';
   month = '[data-qa="months"]';
@@ -25,5 +30,4 @@ export class RegisterLocator {
 
   createAccountButton = '[data-qa="create-account"]';
   continueButton = '[data-qa="continue-button"]';
-  accountCreatedText = 'text=Account Created!';
 }

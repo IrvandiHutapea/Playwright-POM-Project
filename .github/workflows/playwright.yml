@@ -4,6 +4,7 @@ name: Playwright POM Tests and PDF Reports
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -45,15 +46,31 @@ jobs:
         env:
           CI: "true"
 
-      - name: Upload reports and evidence
+      - name: Upload individual PDF reports
         if: ${{ always() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
-          name: Playwright-Test-Reports-${{ github.run_number }}
+          name: Playwright-PDF-Reports-${{ github.run_number }}
+          path: Reports/Individual/*.pdf
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload HTML report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: Playwright-HTML-Report-${{ github.run_number }}
+          path: playwright-report/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload test results and evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: Playwright-Test-Evidence-${{ github.run_number }}
           path: |
-            Reports/Individual/
             Reports/playwright-results.json
-            playwright-report/
             test-results/
           if-no-files-found: warn
           retention-days: 30
