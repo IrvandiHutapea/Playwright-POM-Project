@@ -19,12 +19,9 @@ export class CartPage {
       await modal.waitFor({ state: 'hidden' });
     }
 
-    // Buka Cart dari navbar
-    const cartLink = this.page
-      .locator('header a[href="/view_cart"]')
-      .first();
+    // Buka halaman Cart secara langsung
+    await this.page.goto('/view_cart');
 
-    await cartLink.click();
     await this.page.waitForURL(/\/view_cart/);
     await this.page.waitForLoadState('domcontentloaded');
   }

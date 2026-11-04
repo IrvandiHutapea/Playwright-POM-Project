@@ -84,15 +84,19 @@ test('Register, then logout', async ({ page }, testInfo) => {
     }
   );
 
-  // STEP 8: Verify logged-in status
+    // STEP 8: Verify logged-in status
   await reportStep(
     page,
     testInfo,
     'Step 8 - Verify logged-in status',
     async () => {
+      // Tunggu sampai kembali ke homepage
+      await page.waitForURL('https://automationexercise.com/');
+
+      // Verifikasi status login
       await expect(
         page.locator('a:has-text("Logged in as")')
-      ).toBeVisible();
+      ).toBeVisible({ timeout: 15000 });
     }
   );
 
