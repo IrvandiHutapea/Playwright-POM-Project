@@ -1,4 +1,5 @@
-import XLSX from 'xlsx';
+
+import ExcelJS from 'exceljs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -9,12 +10,85 @@ export function getProjectRoot() {
   return path.resolve(__dirname, '..');
 }
 
-export function readExcel(fileName, sheetName) {
-  const filePath = path.join(getProjectRoot(), 'test_data', fileName);
-  const workbook = XLSX.readFile(filePath);
-  const worksheet = workbook.Sheets[sheetName];
-  if (!worksheet) {
-    throw new Error(`Worksheet "${sheetName}" tidak ditemukan di ${fileName}`);
+function normalizeCellValue(value) {
+  if (value === null || value === undefined) {
+    return '';
   }
-  return XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (typeof value === 'object') {
+    if ('result' in value) {
+      return normalizeCellValue(value.result);
+    }
+
+    if (Array.isArray(value.richText)) {
+      return value.richText.map(item => item.text).join('');
+    }
+
+    if ('text' in value) {
+      return value.text;
+    }
+  }
+
+  return value;
+}
+
+export async function readExcel(fileName, sheetName) {
+  const filePath = path.join(
+    getProjectRoot(),
+    'test_data',
+    fileName
+  );
+
+  const workbook = new ExcelJS.Workbook();
+
+  await workbook.xlsx.readFile(filePath);
+
+  const worksheet = workbook.getWorksheet(sheetName);
+
+  if (!worksheet) {
+    throw new Error(
+      `Worksheet "${sheetName}" tidak ditemukan di ${fileName}`
+    );
+  }
+
+  const headerRow = worksheet.getRow(1);
+
+  const headers = [];
+
+  for (let column = 1; column <= worksheet.columnCount; column++) {
+    const header = normalizeCellValue(
+      headerRow.getCell(column).value
+    );
+
+    headers.push(
+      header === '' ? `__EMPTY_${column}` : String(header).trim()
+    );
+  }
+
+  const data = [];
+
+  for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
+    const row = worksheet.getRow(rowNumber);
+    const record = {};
+
+    headers.forEach((header, index) => {
+      record[header] = normalizeCellValue(
+        row.getCell(index + 1).value
+      );
+    });
+
+    const isEmpty = Object.values(record).every(
+      value => value === ''
+    );
+
+    if (!isEmpty) {
+      data.push(record);
+    }
+  }
+
+  return data;
 }
