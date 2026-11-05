@@ -1,11 +1,19 @@
 
 import { readExcel } from './ExcelUtils.js';
 
-const loginRows = readExcel('LoginData.xlsx', 'Login');
-const registerRows = readExcel('RegisterData.xlsx', 'Register');
-const productRows = readExcel('ProductData.xlsx', 'Product');
-const contactRows = readExcel('ContactUsData.xlsx', 'Contactus');
-const cartRows = readExcel('CartData.xlsx', 'Cart');
+const [
+  loginRows,
+  registerRows,
+  productRows,
+  contactRows,
+  cartRows,
+] = await Promise.all([
+  readExcel('LoginData.xlsx', 'Login'),
+  readExcel('RegisterData.xlsx', 'Register'),
+  readExcel('ProductData.xlsx', 'Product'),
+  readExcel('ContactUsData.xlsx', 'Contactus'),
+  readExcel('CartData.xlsx', 'Cart'),
+]);
 
 const validLoginRow = loginRows[0];
 
@@ -112,4 +120,3 @@ export function generateUser() {
     mobile: '081234567890',
   };
 }
-

@@ -16,8 +16,8 @@
     "report": "playwright show-report"
   },
   "dependencies": {
-    "pdf-lib": "^1.17.1",
-    "xlsx": "^0.18.5"
+    "exceljs": "^4.4.0",
+    "pdf-lib": "^1.17.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0"
