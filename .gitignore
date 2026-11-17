@@ -17,6 +17,11 @@ blob-report/
 # Generated reports
 Reports/playwright-results.json
 Reports/Individual/*.pdf
-# Generated PDF reports
-reports/*.pdftest_data/~$*.xlsx
+reports/*.pdf
+reports/API/
+
+# Local backup files
+backup/
+
+# Excel temporary files
 test_data/~$*.xlsx
